@@ -86,6 +86,9 @@ func (ls *LogSink) Init(ri logr.RuntimeInfo) {
 func (ls *LogSink) Enabled(level int) bool {
 	// Optimization: Info() will check level internally.
 	zLevel := 1 - int(ls.l.GetLevel())
+	if zLevel > 129 {
+		zLevel = 129
+	}
 	return level <= zLevel
 }
 
