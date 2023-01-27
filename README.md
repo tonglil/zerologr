@@ -30,12 +30,40 @@ func main() {
 }
 ```
 
+## Increasing verbosity
+
+You can do something like the following in your setup code:
+
+```go
+    l := zerolog.Level(-3)
+    zerolog.SetGlobalLevel(l)
+    zl := zerolog.New(os.Stdout).Level(l)
+    log := zerologr.New(&zl)
+    log.V(3).Info("v3")
+    log.V(4).Info("you should NOT see this")
+```
+
+Zerolog's levels get more verbose as the number gets smaller, and more important
+as the number gets larger.
+
+The `-3` in the above snippet means that `log.V(3).Info()` calls will be active.
+`-4` would enable `log.V(4).Info()`, etc.  Note that Zerolog's levels are `int8`
+which means the most verbose level you can give it is -128.  The Zerologr
+implementation will cap `V()` levels greater than 128 to 128, so setting the
+Zerolog level to -128 really means "activate all logs".
+
 ## Implementation Details
 
 For the most part, concepts in Zerolog correspond directly with those in logr.
 
-Levels in logr correspond to custom debug levels in Zerolog. Any given level
-in logr is represents by `zerologLevel = 1 - logrLevel`.
+Zerolog uses semantically named levels for logging (`TraceLevel`, `DebugLevel`,
+`InfoLevel`, `WarningLevel`, ...). Logr uses arbitrary numeric levels.
 
-For example `V(2)` is equivalent to Zerolog's `TraceLevel`, while `V(1)` is
-equivalent to Zerolog's `DebugLevel`.
+Levels in logr correspond to named levels in Zerolog. If the given level in logr
+matches a named level, it is represented by `zerologLevel = 1 - logrLevel`. If
+the level in logr is more verbose than a named Zerolog level (`TraceLevel`), it
+is represented by `zerologLevel = -logrLevel`.
+
+For example logr's `V(0)` is equivalent to Zerolog's `InfoLevel`, `V(1)` is equivalent
+to Zerolog's `DebugLevel`, `V(2)` is equivalent to Zerolog's `TraceLevel`, while
+`V(3)` is equivalent to Zerolog handling it numerically as `-3`.
