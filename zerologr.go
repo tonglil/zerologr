@@ -86,12 +86,21 @@ func (ls *LogSink) Init(ri logr.RuntimeInfo) {
 func (ls *LogSink) Enabled(level int) bool {
 	// Optimization: Info() will check level internally.
 	zLevel := 1 - int(ls.l.GetLevel())
+	if zLevel > 128 {
+		zLevel = 128
+	}
 	return level <= zLevel
 }
 
 // Info logs a non-error message at specified V-level with the given key/value pairs as context.
 func (ls *LogSink) Info(level int, msg string, keysAndValues ...interface{}) {
-	e := ls.l.WithLevel(zerolog.Level(1 - level))
+	l := zerolog.Level(1 - level)
+	// If level is more verbose than Zerolog's TraceLevel, further decrement it
+	// by 1 to match the negative value of logr verbosity.
+	if l < zerolog.TraceLevel {
+		l--
+	}
+	e := ls.l.WithLevel(l)
 	if VerbosityFieldName != "" {
 		e.Int(VerbosityFieldName, level)
 	}
