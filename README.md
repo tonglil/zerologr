@@ -34,8 +34,9 @@ func main() {
 
 For the most part, concepts in Zerolog correspond directly with those in logr.
 
-Levels in logr correspond to custom debug levels in Zerolog. Any given level
-in logr is represents by `zerologLevel = 1 - logrLevel`.
-
-For example `V(2)` is equivalent to Zerolog's `TraceLevel`, while `V(1)` is
-equivalent to Zerolog's `DebugLevel`.
+Levels in logr correspond to levels in Zerolog as `zerologLevel = 1 - logrLevel`
+internally. `logr.V(0)` is equivalent to `zerolog.InfoLevel`; `logr.V(1)` is
+equivalent to `zerolog.DebugLevel`; `logr.V(2)` is equivalent to `zerolog.TraceLevel`
+which is the highest verbosity level documented in Zerolog. Therefore, zerologr only
+supports up to verbosity value 2 in logr by default. Verbosity value is a number and
+is only logged on Info(), not Error().

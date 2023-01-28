@@ -1,23 +1,24 @@
 // Package zerologr defines an implementation of the github.com/go-logr/logr
 // interfaces built on top of Zerolog (https://github.com/rs/zerolog).
 //
-// Usage
+// # Usage
 //
 // A new logr.Logger can be constructed from an existing zerolog.Logger using
 // the New function:
 //
-//  log := zerologr.New(someZeroLogger)
+//	log := zerologr.New(someZeroLogger)
 //
-// Implementation Details
+// # Implementation Details
 //
 // For the most part, concepts in Zerolog correspond directly with those in
 // logr.
 //
-// Levels in logr correspond to custom debug levels in Zerolog.  Any given level
-// in logr is represents by `zerologLevel = 1 - logrLevel`.
-// For example V(2) is equivalent to Zerolog's TraceLevel, while V(1) is
-// equivalent to Zerolog's DebugLevel.  Verbosity value is a number and is only
-// logged on Info(), not Error().
+// Levels in logr correspond to levels in Zerolog as `zerologLevel = 1 - logrLevel`
+// internally. `logr.V(0)` is equivalent to `zerolog.InfoLevel`; `logr.V(1)` is
+// equivalent to `zerolog.DebugLevel`; `logr.V(2)` is equivalent to `zerolog.TraceLevel`
+// which is the highest verbosity level documented in Zerolog. Therefore, zerologr only
+// supports up to verbosity value 2 in logr by default. Verbosity value is a number and
+// is only logged on Info(), not Error().
 package zerologr
 
 import (
@@ -37,10 +38,13 @@ var (
 	VerbosityFieldName = "v"
 
 	// RenderArgsHook mutates the list of key-value pairs passed directly to
-	// logr.Info and logr.Error.
+	// logr.Info and logr.Error. If set to nil, it is disabled.
 	RenderArgsHook = DefaultRender
 	// RenderValuesHook mutates the list of key-value pairs saved via logr.WithValues.
+	// If set to nil, it is disabled.
 	RenderValuesHook = DefaultRender
+	// EnforceLevelCheck enables slower and redundant level check.
+	EnforceLevelCheck = false
 )
 
 // Logger is type alias of logr.Logger.
@@ -83,8 +87,18 @@ func (ls *LogSink) Init(ri logr.RuntimeInfo) {
 }
 
 // Enabled tests whether this LogSink is enabled at the specified V-level.
+// By default, zerologr optimizes logging hotpath by bypassing redundant
+// level check. If logr.Enabled() is used as the condition for lazy
+// evaluation, set zerologr.EnforceLevelCheck=true to enforce checking.
 func (ls *LogSink) Enabled(level int) bool {
-	// Optimization: Info() will check level internally.
+	if EnforceLevelCheck {
+		zlvl := zerolog.Level(1 - level)
+		if zlvl < ls.l.GetLevel() || zlvl < zerolog.GlobalLevel() {
+			return false
+		}
+		return true
+	}
+	// Optimization: zerolog will check level again internally.
 	const traceLevel = 1 - int(zerolog.TraceLevel)
 	return level <= traceLevel
 }
