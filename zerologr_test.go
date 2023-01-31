@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/rs/zerolog"
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/rs/zerolog"
 
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +21,7 @@ func TestLogging(t *testing.T) {
 	VerbosityFieldName = ""
 
 	tests := []struct {
-		description  string
+		name         string
 		zerologLevel zerolog.Level
 		logFunc      func(log logr.Logger)
 		formatter    func(interface{}) interface{}
@@ -29,7 +30,7 @@ func TestLogging(t *testing.T) {
 		assertions   map[string]string
 	}{
 		{
-			description: "basic logging",
+			name: "basic logging",
 			logFunc: func(log logr.Logger) {
 				log.Info("hello, world")
 			},
@@ -39,7 +40,7 @@ func TestLogging(t *testing.T) {
 			},
 		},
 		{
-			description: "set name once",
+			name: "set name once",
 			logFunc: func(log logr.Logger) {
 				log.WithName("main").Info("hello, world")
 			},
@@ -50,7 +51,7 @@ func TestLogging(t *testing.T) {
 			},
 		},
 		{
-			description: "set name twice",
+			name: "set name twice",
 			logFunc: func(log logr.Logger) {
 				log.WithName("main").WithName("subpackage").Info("hello, world")
 			},
@@ -61,7 +62,7 @@ func TestLogging(t *testing.T) {
 			},
 		},
 		{
-			description: "set name and values and name again",
+			name: "set name and values and name again",
 			logFunc: func(log logr.Logger) {
 				log.
 					WithName("main").
@@ -79,7 +80,7 @@ func TestLogging(t *testing.T) {
 			},
 		},
 		{
-			description: "V(0) logging with info level set is shown",
+			name: "V(0) logging with info level set is shown",
 			logFunc: func(log logr.Logger) {
 				log.V(0).Info("hello, world")
 			},
@@ -89,7 +90,7 @@ func TestLogging(t *testing.T) {
 			},
 		},
 		{
-			description: "V(2) logging with info level set is not shown",
+			name: "V(2) logging with info level set is not shown",
 			logFunc: func(log logr.Logger) {
 				log.V(1).Info("hello, world")
 				log.V(2).Info("hello, world")
@@ -97,7 +98,7 @@ func TestLogging(t *testing.T) {
 			assertions: nil,
 		},
 		{
-			description:  "V(1) logging with debug level set is shown",
+			name:         "V(1) logging with debug level set is shown",
 			zerologLevel: zerolog.DebugLevel,
 			logFunc: func(log logr.Logger) {
 				log.V(1).Info("hello, world")
@@ -108,7 +109,7 @@ func TestLogging(t *testing.T) {
 			},
 		},
 		{
-			description:  "V(2) logging with trace level set is shown",
+			name:         "V(2) logging with trace level set is shown",
 			zerologLevel: zerolog.TraceLevel,
 			logFunc: func(log logr.Logger) {
 				log.V(2).Info("hello, world")
@@ -119,7 +120,7 @@ func TestLogging(t *testing.T) {
 			},
 		},
 		{
-			description:  "negative V-logging truncates to info",
+			name:         "negative V-logging truncates to info",
 			zerologLevel: zerolog.TraceLevel,
 			logFunc: func(log logr.Logger) {
 				log.V(-10).Info("hello, world")
@@ -130,7 +131,7 @@ func TestLogging(t *testing.T) {
 			},
 		},
 		{
-			description:  "additive V-logging, negatives ignored",
+			name:         "additive V-logging, negatives ignored",
 			zerologLevel: zerolog.TraceLevel,
 			logFunc: func(log logr.Logger) {
 				log.V(0).V(1).V(-20).V(1).Info("hello, world")
@@ -141,7 +142,7 @@ func TestLogging(t *testing.T) {
 			},
 		},
 		{
-			description: "arguments are added while calling Info()",
+			name: "arguments are added while calling Info()",
 			logFunc: func(log logr.Logger) {
 				log.Info("hello, world", "animal", "walrus")
 			},
@@ -152,7 +153,7 @@ func TestLogging(t *testing.T) {
 			},
 		},
 		{
-			description: "arguments are added after WithValues()",
+			name: "arguments are added after WithValues()",
 			logFunc: func(log logr.Logger) {
 				log.WithValues("color", "green").Info("hello, world", "animal", "walrus")
 			},
@@ -164,7 +165,7 @@ func TestLogging(t *testing.T) {
 			},
 		},
 		{
-			description: "error logs have the appropriate information",
+			name: "error logs have the appropriate information",
 			logFunc: func(log logr.Logger) {
 				log.Error(errors.New("this is error"), "error occurred")
 			},
@@ -175,7 +176,7 @@ func TestLogging(t *testing.T) {
 			},
 		},
 		{
-			description: "error shown with lov severity logger",
+			name: "error shown with low severity logger",
 			logFunc: func(log logr.Logger) {
 				log.Error(errors.New("this is error"), "error occurred")
 			},
@@ -186,7 +187,7 @@ func TestLogging(t *testing.T) {
 			},
 		},
 		{
-			description: "bad number of arguments discards all",
+			name: "bad number of arguments discards all",
 			logFunc: func(log logr.Logger) {
 				log.Info("hello, world", "animal", "walrus", "foo")
 			},
@@ -197,7 +198,7 @@ func TestLogging(t *testing.T) {
 			},
 		},
 		{
-			description: "with default name",
+			name: "with default name",
 			logFunc: func(log logr.Logger) {
 				log.Info("hello, world")
 			},
@@ -209,7 +210,7 @@ func TestLogging(t *testing.T) {
 			},
 		},
 		{
-			description: "without report caller",
+			name: "without report caller",
 			logFunc: func(log logr.Logger) {
 				log.Info("hello, world")
 			},
@@ -220,7 +221,7 @@ func TestLogging(t *testing.T) {
 			},
 		},
 		{
-			description: "with report caller",
+			name: "with report caller",
 			logFunc: func(log logr.Logger) {
 				log.Info("hello, world")
 			},
@@ -232,7 +233,7 @@ func TestLogging(t *testing.T) {
 			},
 		},
 		{
-			description: "with report caller and depth",
+			name: "with report caller and depth",
 			logFunc: func(log logr.Logger) {
 				log.WithCallDepth(2).Info("hello, world")
 			},
@@ -245,10 +246,9 @@ func TestLogging(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		tt := test
-
-		t.Run(tt.description, func(t *testing.T) {
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
 			// Use a buffer for our output.
@@ -256,28 +256,28 @@ func TestLogging(t *testing.T) {
 
 			zerologLogger := zerolog.New(logWriter)
 
-			if tt.zerologLevel != zerolog.PanicLevel {
-				zerologLogger.Level(tt.zerologLevel)
+			if tc.zerologLevel != zerolog.PanicLevel {
+				zerologLogger.Level(tc.zerologLevel)
 			}
 
 			// Send the created logger to the test case to invoke desired
 			// logging.
-			if tt.reportCaller {
+			if tc.reportCaller {
 				zerologLogger = zerologLogger.With().Caller().Logger()
 			}
 
-			if tt.assertions == nil {
+			if tc.assertions == nil {
 				assert.Equal(t, logWriter.Len(), 0)
 				return
 			}
 
 			logger := New(&zerologLogger)
 
-			if tt.defaultName != nil {
-				logger = logger.WithName(strings.Join(tt.defaultName, NameSeparator))
+			if tc.defaultName != nil {
+				logger = logger.WithName(strings.Join(tc.defaultName, NameSeparator))
 			}
 
-			tt.logFunc(logger)
+			tc.logFunc(logger)
 
 			var loggedLine map[string]string
 			b := logWriter.Bytes()
@@ -285,7 +285,7 @@ func TestLogging(t *testing.T) {
 
 			require.NoError(t, err)
 
-			for k, v := range tt.assertions {
+			for k, v := range tc.assertions {
 				field, ok := loggedLine[k]
 
 				// Annotate negative tests with a minus. To ensure `key` is
@@ -386,64 +386,18 @@ func TestLogSink_Enabled(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		tt := test
-
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			logger := zerolog.New(nil).Level(tt.fields.verbosity)
+			logger := zerolog.New(nil).Level(tc.fields.verbosity)
 
 			ls := &LogSink{
 				l: &logger,
 			}
 
-			assert.Equalf(t, tt.want, ls.Enabled(tt.args.level), "Enabled(%v)", tt.args.level)
-		})
-	}
-}
-
-func Test_zerologLevel(t *testing.T) {
-	t.Parallel()
-
-	type args struct {
-		level int
-	}
-
-	tests := []struct {
-		name string
-		args args
-		want zerolog.Level
-	}{
-		{
-			name: "info",
-			args: args{level: 0},
-			want: zerolog.InfoLevel,
-		},
-		{
-			name: "debug",
-			args: args{level: 1},
-			want: zerolog.DebugLevel,
-		},
-		{
-			name: "trace",
-			args: args{level: 2},
-			want: zerolog.TraceLevel,
-		},
-		{
-			name: "beyond",
-			args: args{level: 3},
-			want: zerolog.Level(-2),
-		},
-	}
-
-	for _, test := range tests {
-		tt := test
-
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			assert.Equalf(t, tt.want, zerologLevel(tt.args.level), "zerologLevel(%v)", tt.args.level)
+			assert.Equalf(t, tc.want, ls.Enabled(tc.args.level), "Enabled(%v)", tc.args.level)
 		})
 	}
 }
